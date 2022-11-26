@@ -42,7 +42,7 @@ def solve(stands,
 
     # minimum average temperature
     for p in people:
-        model.addConstr(quicksum(x[p, s] * temperature[s] * amount[s] for s in stands) >= min_avg_temperature * quicksum(x[p, s] * amount[s] for s in stands))
+        model.addConstr(quicksum(x[p, s] * (temperature[s] - min_avg_temperature) * amount[s] for s in stands) >= 0)
 
     # waiting time
     for p1 in people:
