@@ -57,6 +57,12 @@ def solve(groups, max_transactions_pp, payment_methods):
     # constraints
     # TODO: Define the constraints of the model here
 
+    # A transaction must not be higher than the maximum absolute value of the net balances of the two respective transaction partners p1p1​ and p2p2​.
+    for p1 in people:
+        for p2 in friends[p1]:
+            for m in shared_methods[(p1, p2)]:
+                model.addConstr(x[p1, p2, m] <= max(abs(balances[p1]), abs(balances[p2])))
+
     # y=1 -> x>0, y=0 -> x=0
     for p1 in people:
         for p2 in friends[p1]:
