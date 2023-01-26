@@ -56,12 +56,15 @@ def solve(
     # Each robot can only visit each arc and node at most one time.
     for k in range(max_num_robots):
         for a in A:
-            a_opposite = (a[1], a[0])
-            model.addConstr(x[a, k] + x[a_opposite, k] <= 1)
+            if a[0] < a[1]: # avoid duplicate contraints
+                a_opposite = (a[1], a[0])
+                model.addConstr(x[a, k] + x[a_opposite, k] <= 1)
         for i in nodes:
-            model.addConstr(quicksum(x[a, k] for a in A if a[0] == i) <= 1)
-            model.addConstr(quicksum(x[a, k] for a in A if a[1] == i) <= 1)
-            model.addConstr(node[i, k] <= 1) # redundant
+            pass
+            # redundant by use of node variables
+            # model.addConstr(quicksum(x[a, k] for a in A if a[0] == i) <= 1)
+            # model.addConstr(quicksum(x[a, k] for a in A if a[1] == i) <= 1)
+            # model.addConstr(node[i, k] <= 1) # redundant
 
     # if arc a=(i,j) is used, then another arc a' is used, where a'=(x,i), and a''=(j,y), where x and y are nodes that are not i or j.
     for k in range(max_num_robots):
@@ -75,25 +78,33 @@ def solve(
 
     # Each row of mirrors needs to be visited exactly once by any of the robots.
     for a in cleaning_arcs:
-        a_opposite = (a[1], a[0])
-        model.addConstr(
-            quicksum(x[a, k] + x[a_opposite, k] for k in range(max_num_robots)) == 1
-        )
+        if a[0] < a[1]: # avoid duplicate contraints
+            a_opposite = (a[1], a[0])
+            model.addConstr(
+                quicksum(x[a, k] + x[a_opposite, k] for k in range(max_num_robots)) == 1
+            )
 
     # time constraint
-    M = 2**32
+    M = max(max_cleaning_time + 1, 0)
     for k in range(max_num_robots):
         for a in A:
-            if a[0] == 0:
-                model.addConstr(t[a[1], k] + M * (1 - x[a, k]) >= A[a]["time"])
-            else:
-                model.addConstr(t[a[1], k] + M * (1 - x[a, k]) >= t[a[0], k] + A[a]["time"])
+            pass
+            # if a[0] == 0:
+            #     model.addConstr(t[a[1], k] + M * (1 - x[a, k]) >= A[a]["time"])
+            # else:
+            #     model.addConstr(t[a[1], k] + M * (1 - x[a, k]) >= t[a[0], k] + A[a]["time"])
+            # if a[0] == 0:
+            #     model.addConstr(t[a[1], k] >= A[a]["time"] * x[a, k] * 0)
+            # else:
+            #     model.addConstr(t[a[1], k] >= t[a[0], k] + A[a]["time"] * x[a, k] * 0)
 
     # Cleaning of the last mirror needs to be finished after max_cleaning_time. The robots may leave the tower for their tours at t_0^k=0.
     for k in range(max_num_robots):
-        model.addConstr(
-            quicksum(x[a, k] * A[a]["time"] for a in cleaning_arcs) <= max_cleaning_time
-        )
+        for a in cleaning_arcs:
+            if a[0] < a[1]: # avoid duplicate contraints
+                model.addConstr(
+                   t[a[0], k]  <= max_cleaning_time
+                )
 
     # A cleaning arc cannot be used for transport, i.e., once a robot travels on a cleaning arc, it also is cleaning the row.
     # Each robot has a maximum cleaning water capacity of water_capacity[k]. Cleaning mirrors on cleaning arcs a∈A_clean requires w_a​ water.
