@@ -70,7 +70,6 @@ def solve(
         model.addConstr(t[0, k] >= t[0, k + 1])
 
     # Add objective
-    # model.setObjective(quicksum(t[0, k] for k in range(max_num_robots)), GRB.MINIMIZE)
     model.setObjective(quicksum(x[a, k] * A[a]['time'] for k in range(max_num_robots) for a in A), GRB.MINIMIZE)
 
     # do not change the code below this line
